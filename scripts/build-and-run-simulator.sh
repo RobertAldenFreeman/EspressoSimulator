@@ -1,0 +1,2 @@
+./build-simulator.sh
+./SensorSimulator
