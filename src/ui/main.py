@@ -1,3 +1,5 @@
+import json
+import random
 import ttkbootstrap as tk
 from tkinter import *
 import ttkbootstrap as ttk
@@ -14,38 +16,70 @@ def is_non_negative_number(P):
 
 def create_row_with_widgets(parent):
     frame = ttk.Frame(parent)
+    widgets = {}
 
-    # Label for the Combobox
+    # Label and Combobox for Sensor Type
     label_combobox = ttk.Label(frame, text="Sensor", anchor="center")
     label_combobox.grid(row=0, column=0, pady=5, sticky="ew")
-
-    # Create a Combobox
     sensor_types = ["Thermistor", "Flux"]
     combobox = ttk.Combobox(frame, bootstyle="primary", values=sensor_types)
     combobox.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
     combobox.current(0)
+    widgets["sensor_type"] = combobox
 
+    # Labels and Entries for other parameters
     labels_text_fields = ["Pin", "Min Value", "Max Value", "Frequency", "Duration"]
-
-    # Create labels and entries in a loop
-    for i in range(5):
-        # Label for each text field
-        label_entry = ttk.Label(frame, text=labels_text_fields[i], anchor="center")
+    for i, label in enumerate(labels_text_fields):
+        label_entry = ttk.Label(frame, text=label, anchor="center")
         label_entry.grid(row=0, column=i+1, pady=5, sticky="ew")
-
-        # Text field (Entry widget)
         entry = ttk.Entry(frame, bootstyle="secondary")
         entry.grid(row=1, column=i+1, padx=5, pady=5, sticky="ew")
+        widgets[label.lower().replace(" ", "_")] = entry
 
-    return frame
+    return frame, widgets
+
+# Variable to hold the checkbox state
+write_to_file_var = BooleanVar(value=False)
+sensor_data = []
 
 def add_row():
-    row_frame = create_row_with_widgets(scrollable_frame)
+    row_frame, widgets = create_row_with_widgets(scrollable_frame)
+    sensor_data.append(widgets)
     row_frame.pack(padx=10, pady=5, fill='x')
     canvas.configure(scrollregion=canvas.bbox("all"))
 
+def generate_sensor_data():
+    data = []
+    for widgets in sensor_data:
+        sensor_info = {
+            "sensor_type": widgets["sensor_type"].get(),
+            "pin": widgets["pin"].get(),
+            "min_value": float(widgets["min_value"].get()),
+            "max_value": float(widgets["max_value"].get()),
+            "frequency": float(widgets["frequency"].get()),
+            "duration": float(widgets["duration"].get()),
+            "generated_data": []
+        }
+        for _ in range(int(sensor_info["duration"] * sensor_info["frequency"])):
+            value = random.uniform(sensor_info["min_value"], sensor_info["max_value"])
+            sensor_info["generated_data"].append(value)
+        data.append(sensor_info)
+    return data
+
 def run_sim():
-    print("Run Simulator function called")
+    generated_data = generate_sensor_data()
+    print(generated_data)  # Printing the generated data
+
+    # Check if the Write to file checkbox is checked. 
+    # If so, the file writing should be able to close the file handle if
+    if write_to_file_var.get():
+        try:
+            with open('sensor_data_output.json', 'w') as file:
+                json.dump(generated_data, file, indent=4)
+            print("Data written to sensor_data_output.json")
+        except Exception as e:
+            print("An error occurred:", e)
+
 
 # Main frame
 main_frame = ttk.Frame(root)
@@ -54,13 +88,11 @@ main_frame.pack(fill='both', expand=True)
 # Scrollable area setup
 canvas = tk.Canvas(main_frame)
 v_scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
-h_scrollbar = ttk.Scrollbar(root, orient="horizontal", command=canvas.xview)
-canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+canvas.configure(yscrollcommand=v_scrollbar.set)
 
 # Positioning scrollbars
 canvas.pack(side="left", fill="both", expand=True)
 v_scrollbar.pack(side="right", fill="y")
-h_scrollbar.pack(side="bottom", fill="x")
 
 # Scrollable frame inside the canvas
 scrollable_frame = ttk.Frame(canvas)
@@ -87,5 +119,10 @@ run_frame.pack(fill='x', side='bottom', pady=10, padx=70)
 run_button = ttk.Button(run_frame, text="Run Simulator", command=run_sim, bootstyle="primary")
 run_button.pack(side='right')
 
+# Checkbox for enabling file writing
+write_checkbox_frame = ttk.Frame(root)
+write_checkbox_frame.pack(fill='x', side='bottom', pady=10, padx=70)
+write_checkbox = ttk.Checkbutton(write_checkbox_frame, text="Write to file", variable=write_to_file_var, bootstyle="primary")
+write_checkbox.pack(side='right')
 
 root.mainloop()
