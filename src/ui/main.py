@@ -10,6 +10,7 @@ root.geometry("950x350")
 root.iconbitmap("../../images/logo.ico")
 root.title("Agresso Simulator")
 
+# TODO: Add the non-negative number inputs for the text fields
 def is_non_negative_number(P):
     # Check if the string is a non-negative number
     return P.isdigit() or P == ""
@@ -48,7 +49,7 @@ def add_row():
     row_frame.pack(padx=10, pady=5, fill='x')
     canvas.configure(scrollregion=canvas.bbox("all"))
 
-def generate_sensor_data():
+def get_data_from_ui():
     data = []
     for widgets in sensor_data:
         sensor_info = {
@@ -60,10 +61,25 @@ def generate_sensor_data():
             "duration": float(widgets["duration"].get()),
             "generated_data": []
         }
-        for _ in range(int(sensor_info["duration"] * sensor_info["frequency"])):
-            value = random.uniform(sensor_info["min_value"], sensor_info["max_value"])
-            sensor_info["generated_data"].append(value)
         data.append(sensor_info)
+    return data
+
+def generate_sensor_data():
+    data = get_data_from_ui()
+
+    for sensor_info in data:
+        min = sensor_info["min_value"]
+        max = sensor_info["max_value"]
+
+        # TODO: Move this logic to the text field's validate function
+        if min >= max:
+            print("Error: min >= max, skipping this iteration")
+            continue
+
+        for _ in range(int(sensor_info["duration"] * sensor_info["frequency"])):
+            value = random.uniform(min, max)
+            sensor_info["generated_data"].append(value)
+
     return data
 
 def run_sim():
