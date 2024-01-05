@@ -1,12 +1,28 @@
 import ttkbootstrap as ttk
 from tkinter import *
 from data_generation import sensor_data
-from data_generation import run_sim
+from sensor_data_client import is_valid_port
 
-def setup_ui(root):
+def setup_ui(root, server_ip, server_port):
     # Main frame
     main_frame = ttk.Frame(root)
     main_frame.pack(fill='both', expand=True)
+
+    # Server Connection Frame
+    server_conn_frame = ttk.Frame(root)
+    server_conn_frame.pack(fill='x', side='top', pady=10, padx=70)
+
+    # Server IP Entry
+    ttk.Label(server_conn_frame, text="Server IP:").pack(side='left', padx=(0, 10))
+    server_ip_var = StringVar(value='127.0.0.1')  # Default IP
+    server_ip_entry = ttk.Entry(server_conn_frame, textvariable=server_ip_var)
+    server_ip_entry.pack(side='left')
+
+    # Server Port Entry
+    ttk.Label(server_conn_frame, text="Port:").pack(side='left', padx=(10, 10))
+    server_port_var = StringVar(value='12345')  # Default Port
+    server_port_entry = ttk.Entry(server_conn_frame, textvariable=server_port_var)
+    server_port_entry.pack(side='left')
 
     # Scrollable area setup
     canvas = Canvas(main_frame)
@@ -19,12 +35,6 @@ def setup_ui(root):
     scrollable_frame = ttk.Frame(canvas)
     canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
     scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-
-    # Run Simulation Button
-    run_frame = ttk.Frame(root)
-    run_frame.pack(fill='x', side='bottom', pady=10, padx=70)
-    run_button = ttk.Button(run_frame, text="Run Simulator", command=lambda: run_sim(scrollable_frame, write_to_file_var), bootstyle="primary")
-    run_button.pack(side='right')
 
     # Checkbox for enabling file writing
     write_to_file_var = BooleanVar(value=False)
@@ -69,6 +79,7 @@ def add_row(parent, canvas):
     for key, entry in widgets.items():
         if key in ['min_value', 'max_value', 'frequency', 'duration']:
             entry.config(validate="key", validatecommand=(entry.register(is_valid_number), '%P'))
+            
     
 def is_valid_number(value):
     try:

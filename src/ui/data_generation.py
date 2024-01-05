@@ -1,4 +1,5 @@
 from file_operations import write_to_file
+from sensor_data_client import SensorDataClient
 import random
 
 sensor_data = []  # This should be populated with references to UI widgets
@@ -37,9 +38,25 @@ def generate_sensor_data(scrollable_frame):
 
     return data
 
-def run_sim(scrollable_frame, write_to_file_var):
+import json
+import socket
+
+def send_sensor_data(data, server_ip, server_port):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        for sensor in data:
+            serialized_data = json.dumps(sensor).encode('utf-8')
+            sock.sendto(serialized_data, (server_ip, server_port))
+
+
+def run_sim(scrollable_frame, write_to_file_var, server_ip, server_port):
     generated_data = generate_sensor_data(scrollable_frame)
     print(generated_data)  # Printing the generated data
 
+    # Create a sensor data client and send the data
+    client = SensorDataClient(server_ip, server_port)
+    client.send_sensor_data(generated_data)
+    client.close()
+
     if write_to_file_var.get():
         write_to_file(generated_data)
+
