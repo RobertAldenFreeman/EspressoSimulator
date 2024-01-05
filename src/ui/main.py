@@ -10,7 +10,7 @@ def main():
     SERVER_PORT = 12345       # Replace with your server's port
 
     root = ttk.Window(themename="superhero")
-    root.geometry("950x350")
+    root.geometry("950x450")
     root.iconbitmap("../../images/logo.ico")
     root.title("Agresso Simulator")
 

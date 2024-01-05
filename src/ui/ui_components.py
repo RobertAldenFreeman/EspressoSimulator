@@ -24,6 +24,7 @@ def setup_ui(root, server_ip, server_port):
     server_port_entry = ttk.Entry(server_conn_frame, textvariable=server_port_var)
     server_port_entry.pack(side='left')
 
+
     # Scrollable area setup
     canvas = Canvas(main_frame)
     v_scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
@@ -87,3 +88,4 @@ def is_valid_number(value):
         return value.isdigit() or value == "" or (value.replace('.', '', 1).isdigit() and float(value) >= 0)
     except ValueError:
         return False
+    

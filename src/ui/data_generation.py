@@ -1,6 +1,8 @@
 from file_operations import write_to_file
 from sensor_data_client import SensorDataClient
 import random
+import time
+import threading
 
 sensor_data = []  # This should be populated with references to UI widgets
 
@@ -52,11 +54,38 @@ def run_sim(scrollable_frame, write_to_file_var, server_ip, server_port):
     generated_data = generate_sensor_data(scrollable_frame)
     print(generated_data)  # Printing the generated data
 
-    # Create a sensor data client and send the data
-    client = SensorDataClient(server_ip, server_port)
-    client.send_sensor_data(generated_data)
-    client.close()
-
+    # Thread for writing to file
     if write_to_file_var.get():
-        write_to_file(generated_data)
+        file_thread = threading.Thread(target=write_to_file, args=(generated_data,))
+        file_thread.start()
+
+    # Thread for sending data via UDP
+    def send_data():
+        client = SensorDataClient(server_ip, server_port)
+        start_time = time.time()
+        for sensor in generated_data:
+            duration = sensor["duration"]
+            frequency = sensor["frequency"]
+            interval = 1 / frequency if frequency > 0 else 0
+
+            for _ in range(int(duration * frequency)):
+                current_time = time.time()
+                elapsed_time = current_time - start_time
+
+                if elapsed_time > duration:
+                    break
+
+                serialized_data = json.dumps(sensor).encode('utf-8')
+                client.send_sensor_data(serialized_data)
+                time.sleep(interval - (time.time() - current_time))  # Adjust for processing time
+
+        client.close()
+
+    send_thread = threading.Thread(target=send_data)
+    send_thread.start()
+
+    # Wait for threads to finish
+    if write_to_file_var.get():
+        file_thread.join()
+    send_thread.join()
 
